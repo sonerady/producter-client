@@ -50,6 +50,33 @@ function getCroppedImg(
   });
 }
 
+// Yeni fonksiyon: Bir görseli 5000x5000 canvas'a ortalar
+async function fitImageToCanvas5000(imageUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.src = imageUrl;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject();
+      canvas.width = 5000;
+      canvas.height = 5000;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, 5000, 5000);
+      // Aspect ratio koruyarak boyutlandır
+      const scale = Math.min(5000 / img.width, 5000 / img.height);
+      const drawWidth = img.width * scale;
+      const drawHeight = img.height * scale;
+      const x = (5000 - drawWidth) / 2;
+      const y = (5000 - drawHeight) / 2;
+      ctx.drawImage(img, x, y, drawWidth, drawHeight);
+      resolve(canvas.toDataURL("image/png", 0.95));
+    };
+    img.onerror = reject;
+  });
+}
+
 function App() {
   const [image, setImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -132,16 +159,14 @@ function App() {
 
   const handleDownload = async (imageUrl: string) => {
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // 5000x5000 canvas'a oturtulmuş halini indir
+      const dataUrl = await fitImageToCanvas5000(imageUrl);
       const link = document.createElement("a");
-      link.href = url;
-      link.download = `retouch-result-${Date.now()}.webp`;
+      link.href = dataUrl;
+      link.download = `retouch-result-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("İndirme hatası:", err);
     }
