@@ -236,6 +236,39 @@ function App() {
     return jsonResponse;
   }
 
+  async function sendToIncreaseResolution(imageUrl: string) {
+    const url = "https://producter-server.onrender.com/increase-resolution";
+    const body = {
+      image_url: imageUrl,
+    };
+
+    console.log("🔍 Sending to increase resolution proxy server...");
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    console.log(
+      "📨 Increase resolution proxy response status:",
+      response.status
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ Increase resolution proxy error response:", errorText);
+      throw new Error("Increase resolution API hatası: " + errorText);
+    }
+
+    const jsonResponse = await response.json();
+    console.log("📦 Increase resolution proxy JSON response:", jsonResponse);
+
+    return jsonResponse;
+  }
+
   const handleCreate = async () => {
     if (!croppedImage) return;
     setError("");
@@ -263,7 +296,7 @@ function App() {
     // Tek Gemini promptu oluştur
     const generatePrompt = async () => {
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const model = "gemini-1.5-flash";
+      const model = "gemini-2.0-flash";
       const contents = [
         {
           role: "user",
@@ -329,56 +362,93 @@ The style must always be technical, descriptive, photorealistic, and tailored to
           replicateResult
         );
 
-        // Process'i güncelle - başarılı
+        // Flux Lora'dan gelen sonucu al
+        let fluxResultUrl = "";
         if (
           replicateResult.output &&
           typeof replicateResult.output === "string"
         ) {
-          console.log(
-            `✅ Setting image URL (string) for ${processId}:`,
-            replicateResult.output
-          );
-          setProcesses((prev) =>
-            prev.map((p) =>
-              p.id === processId
-                ? {
-                    ...p,
-                    status: "completed",
-                    resultUrl: replicateResult.output,
-                  }
-                : p
-            )
-          );
+          fluxResultUrl = replicateResult.output;
         } else if (
           replicateResult.output &&
           Array.isArray(replicateResult.output) &&
           replicateResult.output.length > 0
         ) {
+          fluxResultUrl = replicateResult.output[0];
+        } else {
+          console.log(`❌ No valid Flux output found for ${processId}`);
+          setProcesses((prev) =>
+            prev.map((p) =>
+              p.id === processId
+                ? {
+                    ...p,
+                    status: "error",
+                    error: "No valid Flux output received",
+                  }
+                : p
+            )
+          );
+          return;
+        }
+
+        console.log(`🔍 Flux result URL for ${processId}:`, fluxResultUrl);
+
+        // Flux sonucunu increase-resolution'a gönder
+        console.log(
+          `🚀 Sending Flux result to increase resolution for ${processId}...`
+        );
+        const increaseResult = await sendToIncreaseResolution(fluxResultUrl);
+
+        console.log(
+          `🔍 Increase resolution response for ${processId}:`,
+          increaseResult
+        );
+
+        // Increase resolution sonucunu al
+        let finalResultUrl = "";
+        if (
+          increaseResult.output &&
+          typeof increaseResult.output === "string"
+        ) {
+          finalResultUrl = increaseResult.output;
+        } else if (
+          increaseResult.output &&
+          Array.isArray(increaseResult.output) &&
+          increaseResult.output.length > 0
+        ) {
+          finalResultUrl = increaseResult.output[0];
+        } else {
           console.log(
-            `✅ Setting image URL (array) for ${processId}:`,
-            replicateResult.output[0]
+            `❌ No valid increase resolution output found for ${processId}`
           );
           setProcesses((prev) =>
             prev.map((p) =>
               p.id === processId
                 ? {
                     ...p,
-                    status: "completed",
-                    resultUrl: replicateResult.output[0],
+                    status: "error",
+                    error: "No valid increase resolution output received",
                   }
                 : p
             )
           );
-        } else {
-          console.log(`❌ No valid output found for ${processId}`);
-          setProcesses((prev) =>
-            prev.map((p) =>
-              p.id === processId
-                ? { ...p, status: "error", error: "No valid output received" }
-                : p
-            )
-          );
+          return;
         }
+
+        console.log(`✅ Final result URL for ${processId}:`, finalResultUrl);
+
+        // Final sonucu process'e kaydet
+        setProcesses((prev) =>
+          prev.map((p) =>
+            p.id === processId
+              ? {
+                  ...p,
+                  status: "completed",
+                  resultUrl: finalResultUrl,
+                }
+              : p
+          )
+        );
       } catch (err: any) {
         console.error(`❌ Error in process ${processId}:`, err);
         setProcesses((prev) =>
