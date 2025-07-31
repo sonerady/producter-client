@@ -296,7 +296,7 @@ function App() {
     // Tek Gemini promptu oluştur
     const generatePrompt = async () => {
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const model = "gemini-2.0-flash";
+      const model = "gemini-2.5-flash";
       const contents = [
         {
           role: "user",
@@ -641,7 +641,7 @@ The style must always be technical, descriptive, photorealistic, and tailored to
       )}
 
       <div className="card upload-section">
-        <h2>Resim Yükle</h2>
+        <h2>Upload Product Photo</h2>
         <div className="upload-area">
           <input
             type="file"
@@ -654,7 +654,7 @@ The style must always be technical, descriptive, photorealistic, and tailored to
             className="upload-btn"
             onClick={() => fileInputRef.current?.click()}
           >
-            Resim Seç
+            Select Photo
           </button>
           {croppedImage && (
             <img src={croppedImage} alt="Yüklenen" className="preview-image" />
@@ -671,9 +671,9 @@ The style must always be technical, descriptive, photorealistic, and tailored to
             />
             <div className="preserve-pose-custom-checkbox"></div>
             <div className="preserve-pose-content">
-              <span className="preserve-pose-text">Pozu Koru</span>
+              <span className="preserve-pose-text">Keep Pose</span>
               <span className="preserve-pose-description">
-                Ürünün kamera açısı ve pozisyonunu korur
+                Keep the product's camera angle and position
               </span>
             </div>
           </label>
@@ -684,12 +684,12 @@ The style must always be technical, descriptive, photorealistic, and tailored to
           onClick={handleCreate}
           disabled={!croppedImage}
         >
-          Oluştur
+          Create
         </button>
       </div>
 
       <div className="card result-section">
-        <h2>Sonuç Kartı</h2>
+        <h2>Result Card</h2>
         <div className="result-card">
           {error ? (
             <span style={{ color: "#ef4444" }}>{error}</span>
@@ -719,13 +719,13 @@ The style must always be technical, descriptive, photorealistic, and tailored to
                     <div className="process-status-badge">
                       {process.status === "processing" && (
                         <span className="status-badge processing">
-                          İşleniyor
+                          Processing
                         </span>
                       )}
                       {process.status === "completed" && (
                         <>
                           <span className="status-badge completed">
-                            Tamamlandı
+                            Completed
                           </span>
                           {process.resultUrl && (
                             <>
@@ -734,9 +734,9 @@ The style must always be technical, descriptive, photorealistic, and tailored to
                                 onClick={() =>
                                   handleConvertToPng(process.resultUrl!)
                                 }
-                                title="PNG'ye Dönüştür"
+                                title="Convert to PNG"
                               >
-                                PNG Yap
+                                Convert to PNG
                               </button>
                               <button
                                 className="download-btn-small"
@@ -792,15 +792,15 @@ The style must always be technical, descriptive, photorealistic, and tailored to
               ))}
             </div>
           ) : croppedImage ? (
-            <span>Resim hazır! "Oluştur" butonuna tıklayın.</span>
+            <span>Photo is ready! Click the "Create" button.</span>
           ) : (
-            <span>Lütfen bir resim yükleyin</span>
+            <span>Please upload a photo</span>
           )}
         </div>
       </div>
 
       <div className="card png-section">
-        <h2>PNG Dönüştürme</h2>
+        <h2>PNG Conversion</h2>
         <div className="png-card">
           {pngProcesses.length > 0 ? (
             <div className="process-list">
@@ -829,21 +829,21 @@ The style must always be technical, descriptive, photorealistic, and tailored to
                     <div className="process-status-badge">
                       {process.status === "processing" && (
                         <span className="status-badge processing">
-                          İşleniyor
+                          Processing
                         </span>
                       )}
                       {process.status === "completed" && (
                         <>
                           <span className="status-badge completed">
-                            Tamamlandı
+                            Completed
                           </span>
                           {process.resultUrl && (
                             <button
                               className="download-btn-small"
                               onClick={() => handleDownload(process.resultUrl!)}
-                              title="PNG İndir"
+                              title="Download PNG"
                             >
-                              İndir
+                              Download
                             </button>
                           )}
                         </>
@@ -857,7 +857,7 @@ The style must always be technical, descriptive, photorealistic, and tailored to
                     {process.status === "processing" && (
                       <div className="status-content">
                         <div className="spinner"></div>
-                        <span>PNG'ye dönüştürülüyor...</span>
+                        <span>Converting to PNG...</span>
                       </div>
                     )}
                     {process.status === "completed" && process.resultUrl && (
@@ -886,7 +886,7 @@ The style must always be technical, descriptive, photorealistic, and tailored to
               ))}
             </div>
           ) : (
-            <span>PNG dönüştürme için "PNG Yap" butonuna tıklayın</span>
+            <span>Click the "Convert to PNG" button to convert to PNG</span>
           )}
         </div>
       </div>
